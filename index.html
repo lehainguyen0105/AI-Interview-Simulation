@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Interview - Hệ Thống Phỏng Vấn AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @keyframes pulse-dot {
+      0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+      40% { opacity: 1; transform: scale(1.1); }
+    }
+    .typing-dot:nth-child(1) { animation: pulse-dot 1.2s infinite ease-in-out; }
+    .typing-dot:nth-child(2) { animation: pulse-dot 1.2s infinite ease-in-out 0.2s; }
+    .typing-dot:nth-child(3) { animation: pulse-dot 1.2s infinite ease-in-out 0.4s; }
+    .sound-wave-bar {
+      animation: sound-wave 0.8s infinite ease-in-out alternate;
+    }
+    @keyframes sound-wave {
+      0% { height: 4px; }
+      100% { height: 22px; }
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-emerald-500 selection:text-white">
+
+  <!-- Header -->
+  <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3 cursor-pointer" onclick="goToHome()">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20 text-slate-950 font-bold text-lg">
+          <i class="fa-solid fa-headset"></i>
+        </div>
+        <div>
+          <span class="font-bold text-base sm:text-lg bg-gradient-to-r from-emerald-400 via-teal-300 to-sky-400 bg-clip-text text-transparent">AI Interview Pro</span>
+          <span class="text-[11px] ml-2 px-2 py-0.5 rounded-full bg-emerald-950 border border-emerald-800 text-emerald-300 font-medium">Bản Sửa Lỗi Giọng Đọc</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 text-xs">
+        <button id="toggleTtsBtn" onclick="toggleGlobalMute()" class="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 hover:text-white flex items-center gap-1.5 transition">
+          <i id="globalAudioIcon" class="fa-solid fa-volume-high text-emerald-400"></i>
+          <span id="globalAudioText">Giọng AI: BẬT</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 flex flex-col justify-center">
+
+    <!-- MÀN HÌNH 1: Cấu hình bắt đầu -->
+    <section id="screen-setup" class="w-full max-w-xl mx-auto">
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+        <div class="text-center mb-6">
+          <div class="inline-flex p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 mb-2">
+            <i class="fa-solid fa-microphone-lines text-2xl"></i>
+          </div>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-white">Khởi Tạo Phỏng Vấn AI</h1>
+          <p class="text-slate-400 text-xs sm:text-sm mt-1">Đã cấu hình bộ lọc phát âm chuẩn thuần tiếng Việt, không bị chèn giọng ngoại ngữ.</p>
+        </div>
+
+        <form id="setupForm" onsubmit="startInterview(event)" class="space-y-5">
+          <!-- Chọn Ngôn Ngữ -->
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">1. Ngôn Ngữ Phỏng Vấn & Giọng Đọc</label>
+            <div class="grid grid-cols-2 gap-3">
+              <label id="lang-card-vi" class="relative flex items-center p-3 rounded-xl border border-emerald-500 bg-emerald-500/15 cursor-pointer transition">
+                <input type="radio" name="language" value="vi" checked onchange="switchLanguage('vi')" class="text-emerald-500 focus:ring-0 mr-2.5">
+                <div>
+                  <div class="text-sm font-semibold text-white flex items-center gap-1.5">
+                    <span>🇻🇳 Tiếng Việt</span>
+                  </div>
+                  <div class="text-[11px] text-emerald-300">Chuẩn hóa ngữ âm 100%</div>
+                </div>
+              </label>
+
+              <label id="lang-card-en" class="relative flex items-center p-3 rounded-xl border border-slate-800 bg-slate-950/80 cursor-pointer transition">
+                <input type="radio" name="language" value="en" onchange="switchLanguage('en')" class="text-emerald-500 focus:ring-0 mr-2.5">
+                <div>
+                  <div class="text-sm font-semibold text-white">🇺🇸 English</div>
+                  <div class="text-[11px] text-slate-400">Native en-US Voice</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Tên Ứng viên -->
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5" id="labelName">2. Tên Ứng Viên</label>
+            <input type="text" id="candidateName" required value="Nguyễn Văn A" 
+                   class="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm">
+          </div>
+
+          <!-- Vị trí -->
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5" id="labelRole">3. Vị Trí Ứng Tuyển</label>
+            <select id="targetPosition" class="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm cursor-pointer">
+              <option value="frontend">Lập Trình Viên Giao Diện (Frontend)</option>
+              <option value="backend">Lập Trình Viên Phía Máy Chủ (Backend)</option>
+            </select>
+          </div>
+
+          <button type="submit" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 font-semibold text-slate-950 text-sm shadow-lg shadow-emerald-500/25 transition flex items-center justify-center gap-2">
+            <span id="btnStartText">Vào Phòng Phỏng Vấn Ngay</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- MÀN HÌNH 2: Phòng phỏng vấn trực tiếp -->
+    <section id="screen-chat" class="hidden w-full flex-col h-[82vh] bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+      <!-- Chat Header -->
+      <div class="px-5 py-3.5 bg-slate-950/70 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="relative">
+            <div class="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold">
+              <i class="fa-solid fa-user-tie"></i>
+            </div>
+            <div class="w-3 h-3 bg-emerald-500 rounded-full absolute bottom-0 right-0 border-2 border-slate-900"></div>
+          </div>
+          <div>
+            <div class="text-sm font-bold text-white flex items-center gap-2">
+              <span id="interviewerName">Trợ Lý Phỏng Vấn AI</span>
+              <span id="langBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 border border-emerald-800 text-emerald-300">🇻🇳 Tiếng Việt Thuần</span>
+            </div>
+            <div class="text-[11px] text-slate-400" id="interviewerRoleText">Vị trí: Lập trình giao diện</div>
+          </div>
+        </div>
+
+        <!-- Progress Indicator -->
+        <div class="text-right">
+          <div class="text-xs font-semibold text-slate-300" id="progressLabel">Tiến độ: Câu 1 / 3</div>
+          <div class="w-28 sm:w-36 h-2 bg-slate-800 rounded-full mt-1 overflow-hidden">
+            <div id="progressBar" class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-300" style="width: 33.3%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Voice Bar when candidate is speaking -->
+      <div id="recordingWaveBar" class="hidden bg-emerald-950/50 border-b border-emerald-800/60 px-4 py-2 flex items-center justify-between">
+        <div class="flex items-center gap-3 text-xs text-emerald-300">
+          <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
+          <span class="font-medium" id="recordingText">Đang nghe giọng nói của bạn... Hãy nói câu trả lời!</span>
+        </div>
+        <div class="flex items-center gap-1 h-5">
+          <span class="sound-wave-bar w-1 bg-emerald-400 rounded"></span>
+          <span class="sound-wave-bar w-1 bg-emerald-400 rounded" style="animation-delay: 0.2s"></span>
+          <span class="sound-wave-bar w-1 bg-emerald-400 rounded" style="animation-delay: 0.4s"></span>
+          <span class="sound-wave-bar w-1 bg-emerald-400 rounded" style="animation-delay: 0.1s"></span>
+        </div>
+      </div>
+
+      <!-- Messages Stream -->
+      <div id="chatMessages" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+        <!-- Messages rendered here -->
+      </div>
+
+      <!-- Typing Indicator -->
+      <div id="typingIndicator" class="hidden px-6 py-2">
+        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-800 border border-slate-700 text-xs text-slate-400">
+          <span class="typing-dot w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span class="typing-dot w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span class="typing-dot w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span id="typingText">Người phỏng vấn đang chuẩn bị câu hỏi...</span>
+        </div>
+      </div>
+
+      <!-- Input Area & Quick Controls -->
+      <div class="p-3 sm:p-4 bg-slate-950 border-t border-slate-800 space-y-2">
+        <!-- Quick Sample Answer Buttons -->
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+          <span class="text-[11px] text-slate-400 flex items-center gap-1">
+            <i class="fa-solid fa-bolt text-amber-400"></i> <span id="quickTestLabel">Bấm test nhanh:</span>
+          </span>
+          <button type="button" onclick="fillSampleAnswer('good')" class="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20 transition text-[11px]">
+            [Mẫu: Tốt 9.0đ]
+          </button>
+          <button type="button" onclick="fillSampleAnswer('medium')" class="px-2.5 py-1 rounded-lg bg-sky-500/10 border border-sky-500/30 text-sky-300 hover:bg-sky-500/20 transition text-[11px]">
+            [Mẫu: Trung bình 6.0đ]
+          </button>
+          <button type="button" onclick="fillSampleAnswer('poor')" class="px-2.5 py-1 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 hover:bg-rose-500/20 transition text-[11px]">
+            [Mẫu: Kém 3.0đ]
+          </button>
+        </div>
+
+        <!-- Chat Input Form -->
+        <form id="chatForm" onsubmit="handleSendAnswer(event)" class="flex items-center gap-2">
+          <div class="relative flex-1">
+            <input type="text" id="answerInput" placeholder="Nói vào micro hoặc gõ câu trả lời của bạn..." 
+                   class="w-full pl-4 pr-12 py-3 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm">
+            <button type="button" id="micBtn" onclick="toggleSpeechRecognition()" title="Bật/Tắt Micro nói tiếng Việt" 
+                    class="absolute inset-y-1.5 right-1.5 w-9 rounded-lg bg-slate-800 text-slate-300 hover:text-emerald-400 hover:bg-slate-700 flex items-center justify-center transition">
+              <i class="fa-solid fa-microphone" id="micIcon"></i>
+            </button>
+          </div>
+          <button type="submit" id="sendBtn" class="px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-semibold text-sm transition flex items-center gap-2 shadow-lg shadow-emerald-500/20">
+            <span class="hidden sm:inline" id="sendBtnText">Gửi</span>
+            <i class="fa-solid fa-paper-plane text-xs"></i>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- MÀN HÌNH 3: Báo cáo kết quả -->
+    <section id="screen-report" class="hidden w-full max-w-3xl mx-auto space-y-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl text-center relative overflow-hidden">
+        <div class="inline-flex p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 mb-3">
+          <i class="fa-solid fa-square-poll-vertical text-2xl"></i>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-white" id="reportHeaderTitle">Kết Quả Đánh Giá Phỏng Vấn</h2>
+        <p class="text-xs sm:text-sm text-slate-400 mt-1" id="reportHeaderSubtitle">Phân tích chi tiết câu trả lời và phản hồi cải thiện từ AI.</p>
+
+        <!-- Score Breakdown Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 text-left">
+          <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 flex flex-col justify-between">
+            <span class="text-xs text-slate-400" id="labelTotalScore">Điểm Tổng Kết</span>
+            <div class="text-3xl font-black text-emerald-400 mt-2" id="finalScoreVal">8.5 <span class="text-xs text-slate-500 font-normal">/ 10</span></div>
+            <span class="text-[11px] text-emerald-300 mt-1" id="finalRatingBadge">Đạt Yêu Cầu Phỏng Vấn</span>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 flex flex-col justify-between">
+            <span class="text-xs text-slate-400" id="labelTechScore">Kiến Thức Kỹ Thuật</span>
+            <div class="text-3xl font-black text-teal-300 mt-2" id="techScoreVal">8.7 <span class="text-xs text-slate-500 font-normal">/ 10</span></div>
+            <span class="text-[11px] text-slate-400 mt-1">Nắm chắc khái niệm cốt lõi</span>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 flex flex-col justify-between">
+            <span class="text-xs text-slate-400" id="labelCommScore">Khả Năng Diễn Đạt</span>
+            <div class="text-3xl font-black text-sky-400 mt-2" id="commScoreVal">8.0 <span class="text-xs text-slate-500 font-normal">/ 10</span></div>
+            <span class="text-[11px] text-slate-400 mt-1">Trình bày rõ ràng, đúng trọng tâm</span>
+          </div>
+        </div>
+
+        <!-- Radar Chart SVG Visualizer -->
+        <div class="mt-6 p-4 rounded-xl bg-slate-950 border border-slate-800 flex flex-col items-center">
+          <div class="text-xs font-semibold text-slate-300 mb-2" id="radarTitle">Biểu Đồ Năng Lực 3 Trụ Cột</div>
+          <svg class="w-64 h-64 overflow-visible" viewBox="0 0 240 240">
+            <!-- Background Web -->
+            <polygon points="120,30 206,180 34,180" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="3,3" />
+            <polygon points="120,70 178,160 62,160" fill="none" stroke="#1e293b" stroke-width="1" />
+            <line x1="120" y1="120" x2="120" y2="30" stroke="#334155" stroke-width="1" />
+            <line x1="120" y1="120" x2="206" y2="180" stroke="#334155" stroke-width="1" />
+            <line x1="120" y1="120" x2="34" y2="180" stroke="#334155" stroke-width="1" />
+            <!-- Dynamic Polygon -->
+            <polygon id="radarPolygon" points="120,45 190,170 50,165" fill="rgba(16, 185, 129, 0.25)" stroke="#10b981" stroke-width="2.5" />
+            <!-- Labels -->
+            <text x="120" y="20" fill="#94a3b8" font-size="11" text-anchor="middle" id="radarLabel1">Chuyên Môn</text>
+            <text x="215" y="195" fill="#94a3b8" font-size="11" text-anchor="middle" id="radarLabel2">Tư Duy</text>
+            <text x="25" y="195" fill="#94a3b8" font-size="11" text-anchor="middle" id="radarLabel3">Diễn Đạt</text>
+          </svg>
+        </div>
+
+        <!-- AI General Summary -->
+        <div class="mt-6 text-left p-4 rounded-xl bg-slate-950 border border-slate-800">
+          <div class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-1" id="generalFeedbackTitle">Nhận Xét Tổng Thể Của AI</div>
+          <p class="text-sm text-slate-300 leading-relaxed" id="aiGeneralFeedback">
+            Ứng viên có nền tảng tư duy và nắm bắt kiến thức kỹ thuật rất tốt, diễn đạt ngắn gọn mạch lạc. Cần đào sâu thêm về các tình huống tối ưu hóa thực tế trong dự án.
+          </p>
+        </div>
+
+        <!-- Detailed Breakdown -->
+        <div class="mt-6 text-left space-y-4" id="detailedQuestionsList">
+          <!-- Populated via JavaScript -->
+        </div>
+
+        <!-- Buttons -->
+        <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+          <button onclick="restartSession()" class="px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 font-semibold text-slate-950 text-sm transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-rotate-left"></i> <span id="btnRestartText">Thực Hiện Buổi Phỏng Vấn Mới</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    /* =====================================================================
+       1. DATA DEFINITION: QUESTION BANKS WITH PHONETIC CLEANING
+       ===================================================================== */
+    const QUESTION_DATA = {
+      vi: {
+        frontend: [
+          {
+            id: 1,
+            // Văn bản hiển thị trên màn hình
+            display: "Em hãy nêu sự khác nhau về phạm vi hoạt động của ba từ khóa khai báo biến va, lét và con-sờ-tần trong ngôn ngữ lập trình web?",
+            // Ngữ âm thuần Việt cho SpeechSynthesis (loại bỏ hoàn toàn tiếng Anh gây lộn giọng)
+            phonetic: "Em hãy nêu sự khác nhau về phạm vi hoạt động của ba từ khóa khai báo biến: va, lét, và con-xờ-tần, trong ngôn ngữ lập trình gép?",
+            sampleGood: "Va có phạm vi hàm và bị đưa lên đầu tệp. Còn lét và con-xờ-tần có phạm vi khối lệnh và không bị đọc trước khi khai báo.",
+            sampleMed: "Va là cách cũ, lét và con-xờ-tần là cách mới để tạo biến.",
+            samplePoor: "Em chỉ nhớ cái này dùng để tạo ra biến chứ chưa rõ khác nhau.",
+            feedback: "Nắm rất tốt sự khác biệt giữa phạm vi hàm và phạm vi khối lệnh."
+          },
+          {
+            id: 2,
+            display: "Mô hình cây giao diện ảo hoạt động ra sao và mang lại lợi ích gì so với việc cập nhật trực tiếp cây giao diện thật?",
+            phonetic: "Mô hình cây giao diện ảo hoạt động ra sao, và mang lại lợi ích gì so với việc cập nhật trực tiếp lên cây giao diện thật?",
+            sampleGood: "Cây giao diện ảo lưu trữ trạng thái trong bộ nhớ. Khi có thay đổi, hệ thống so sánh sự khác biệt và chỉ cập nhật đúng phần tử thay đổi giúp giao diện mượt mà.",
+            sampleMed: "Nó là bản sao trong bộ nhớ giúp tải trang nhanh hơn.",
+            samplePoor: "Nó là cây ảo giúp vẽ màn hình nhanh hơn bình thường.",
+            feedback: "Giải thích chuẩn xác cơ chế so sánh khác biệt trong bộ nhớ."
+          },
+          {
+            id: 3,
+            display: "Khi nào em nên lựa chọn bố cục linh hoạt một chiều và khi nào nên dùng hệ thống lưới đa chiều để dàn trang giao diện?",
+            phonetic: "Khi nào em nên lựa chọn bố cục linh hoạt một chiều, và khi nào nên dùng hệ thống lưới đa chiều để dàn trang giao diện?",
+            sampleGood: "Bố cục một chiều thích hợp dàn các thanh điều hướng hoặc căn giữa theo một hàng hay một cột. Hệ thống lưới đa chiều phù hợp để chia bố cục tổng thể toàn trang.",
+            sampleMed: "Một chiều dùng cho phần tử đơn giản, còn lưới dùng cho trang lớn phức tạp.",
+            samplePoor: "Cái nào tiện thì em viết vào thôi ạ.",
+            feedback: "Phân biệt rành mạch bài toán 1 chiều và 2 chiều trong thiết kế giao diện."
+          }
+        ],
+        backend: [
+          {
+            id: 1,
+            display: "Em hãy phân biệt phương thức đọc dữ liệu gét và phương thức gửi dữ liệu pốt trong việc truyền nhận dữ liệu qua mạng?",
+            phonetic: "Em hãy phân biệt phương thức đọc dữ liệu gét, và phương thức gửi dữ liệu pốt, trong việc truyền nhận dữ liệu qua mạng?",
+            sampleGood: "Phương thức gét truyền tham số ngay trên thanh địa chỉ và có thể lưu tạm, dùng để lấy dữ liệu. Phương thức pốt gửi dữ liệu an toàn bên trong thân gói tin, dùng để tạo mới dữ liệu.",
+            sampleMed: "Gét dùng để đọc dữ liệu trên đường dẫn mạng, pốt dùng để gửi dữ liệu lớn.",
+            samplePoor: "Cả hai đều dùng để gửi dữ liệu qua lại trên mạng.",
+            feedback: "Hiểu rất rõ tính chất an toàn và phương thức truyền tải của từng giao thức."
+          },
+          {
+            id: 2,
+            display: "Cơ chế mục lục chỉ mục trong cơ sở dữ liệu giúp ích gì cho tốc độ tìm kiếm và điểm hạn chế của nó là gì?",
+            phonetic: "Cơ chế mục lục chỉ mục trong cơ sở dữ liệu giúp ích gì cho tốc độ tìm kiếm, và điểm hạn chế của nó là gì?",
+            sampleGood: "Chỉ mục tương tự mục lục cuốn sách giúp tăng tốc độ tìm kiếm dữ liệu. Nhược điểm là tốn thêm dung lượng lưu trữ và làm chậm các thao tác thêm, sửa hoặc xóa dữ liệu.",
+            sampleMed: "Giúp tìm nhanh hơn nhưng tốn dung lượng bộ nhớ ổ cứng.",
+            samplePoor: "Giúp cơ sở dữ liệu chạy nhanh gấp mười lần.",
+            feedback: "Nêu chuẩn xác sự đánh đổi giữa hiệu năng đọc dữ liệu và chi phí ghi dữ liệu."
+          },
+          {
+            id: 3,
+            display: "Làm thế nào để lưu trữ mật khẩu người dùng trong cơ sở dữ liệu một cách an toàn nhất?",
+            phonetic: "Làm thế nào để lưu trữ mật khẩu người dùng trong cơ sở dữ liệu một cách an toàn nhất?",
+            sampleGood: "Không được lưu mật khẩu văn bản thô mà phải sử dụng thuật toán băm mật khẩu một chiều kèm theo chuỗi muối ngẫu nhiên để chống tra cứu ngược.",
+            sampleMed: "Phải mã hóa hoặc băm mật khẩu trước khi lưu vào bảng.",
+            samplePoor: "Lưu vào máy chủ có mật khẩu bảo vệ là được.",
+            feedback: "Nắm vững nguyên lý băm mật mã và kỹ thuật chèn muối bảo mật."
+          }
+        ]
+      },
+      en: {
+        frontend: [
+          {
+            id: 1,
+            display: "Could you explain the scope differences between var, let, and const in JavaScript?",
+            phonetic: "Could you explain the scope differences between var, let, and const in JavaScript?",
+            sampleGood: "var is function-scoped and hoisted. let and const are block-scoped and live in the temporal dead zone before declaration.",
+            sampleMed: "var is the older way, let and const are modern block variables.",
+            samplePoor: "They are all used to declare variables in code.",
+            feedback: "Clear distinction between function and block scoping."
+          },
+          {
+            id: 2,
+            display: "How does the Virtual DOM work and what advantages does it provide over direct Real DOM manipulation?",
+            phonetic: "How does the Virtual DOM work and what advantages does it provide over direct Real DOM manipulation?",
+            sampleGood: "Virtual DOM is an in-memory lightweight representation of the Real DOM. When state changes, diffing calculates minimal DOM updates.",
+            sampleMed: "It is an in-memory copy that makes updates faster.",
+            samplePoor: "It creates a copy of the screen to render faster.",
+            feedback: "Accurate explanation of in-memory diffing and reconciliation."
+          },
+          {
+            id: 3,
+            display: "When would you prefer CSS Flexbox over CSS Grid for page layouts?",
+            phonetic: "When would you prefer CSS Flexbox over CSS Grid for page layouts?",
+            sampleGood: "Flexbox is designed for one-dimensional layouts along a single axis, while Grid is for two-dimensional layouts with rows and columns.",
+            sampleMed: "Flexbox for small components and Grid for entire pages.",
+            samplePoor: "I just pick whichever works for the design.",
+            feedback: "Demonstrated solid understanding of 1D vs 2D web layouts."
+          }
+        ],
+        backend: [
+          {
+            id: 1,
+            display: "What is the difference between GET and POST methods in RESTful API design?",
+            phonetic: "What is the difference between GET and POST methods in RESTful API design?",
+            sampleGood: "GET is idempotent and carries parameters in the URL for retrieval. POST passes data inside the request body to create or mutate resources.",
+            sampleMed: "GET is for retrieving data and POST is for sending data.",
+            samplePoor: "Both are used to communicate with backend servers.",
+            feedback: "Understands idempotency and payload structures correctly."
+          },
+          {
+            id: 2,
+            display: "How does Database Indexing improve search performance, and what are its trade-offs?",
+            phonetic: "How does Database Indexing improve search performance, and what are its trade-offs?",
+            sampleGood: "Indexing speeds up search operations using B-Tree data structures, but adds disk overhead and slows down write, update, and delete queries.",
+            sampleMed: "It speeds up queries but consumes extra storage.",
+            samplePoor: "It makes the database fast.",
+            feedback: "Correctly highlighted the trade-off between read and write efficiency."
+          },
+          {
+            id: 3,
+            display: "What is the industry standard practice for storing user passwords securely in a database?",
+            phonetic: "What is the industry standard practice for storing user passwords securely in a database?",
+            sampleGood: "Never store plaintext passwords. Always use slow one-way cryptographic hashing functions like bcrypt with unique salt values.",
+            sampleMed: "Hash the password before saving it to the database.",
+            samplePoor: "Save it inside a secure protected database server.",
+            feedback: "Understands cryptographic salting and hashing standards."
+          }
+        ]
+      }
+    };
+
+    /* =====================================================================
+       2. PHONETIC CLEANER ENGINE (GIẢI QUYẾT TRIỆT ĐỂ LỖI GIỌNG NÓI LẪN LỘN)
+       ===================================================================== */
+    function sanitizeForVietnameseSpeech(rawText) {
+      if (!rawText) return "";
+      let clean = rawText;
+      // Danh mục chuyển đổi các từ tiếng Anh hay làm giọng Google/Edge bị lẹo giọng
+      const dictionary = [
+        [/\bjavascript\b/gi, "Gia-va sờ-cơ-ríp"],
+        [/\bfrontend\b/gi, "phờ-rơn-en lập trình giao diện"],
+        [/\bbackend\b/gi, "bách-en lập trình máy chủ"],
+        [/\bvirtual dom\b/gi, "mô hình cây ảo"],
+        [/\bdom\b/gi, "cây giao diện"],
+        [/\breact\b/gi, "ri-ếch"],
+        [/\bapi\b/gi, "giao tiếp a pi"],
+        [/\brestful\b/gi, "rét-phun"],
+        [/\bget\b/gi, "gét"],
+        [/\bpost\b/gi, "pốt"],
+        [/\bdatabase\b/gi, "cơ sở dữ liệu"],
+        [/\bvar\b/gi, "va"],
+        [/\blet\b/gi, "lét"],
+        [/\bconst\b/gi, "con-sờ-tần"],
+        [/\bcss\b/gi, "định dạng xi ét ét"],
+        [/\bhtml\b/gi, "hát tê mờ lờ"],
+        [/\bflexbox\b/gi, "bố cục một chiều"],
+        [/\bgrid\b/gi, "bố cục lưới"],
+        [/\bhoisting\b/gi, "đưa biến lên đầu"],
+        [/\bscope\b/gi, "phạm vi biến"]
+      ];
+
+      dictionary.forEach(([regex, replacement]) => {
+        clean = clean.replace(regex, replacement);
+      });
+      // Bỏ các ký tự đặc biệt gây giật giọng đọc
+      clean = clean.replace(/[\/\(\)\[\]\{\}\<\>\_\|\#]/g, ' ');
+      return clean;
+    }
+
+    /* =====================================================================
+       3. STATE MANAGEMENT
+       ===================================================================== */
+    let currentLang = 'vi';
+    let currentRole = 'frontend';
+    let candidateName = 'Nguyễn Văn A';
+    let currentQuestionIndex = 0;
+    let questionsList = [];
+    let answersRecord = [];
+    let isVoiceActive = true;
+    let recognition = null;
+    let isRecording = false;
+
+    /* =====================================================================
+       4. SPEECH SYNTHESIS & RECOGNITION SETUP
+       ===================================================================== */
+    function speakText(textToSpeak, phoneticOverride = null) {
+      if (!isVoiceActive) return;
+      if (!('speechSynthesis' in window)) return;
+
+      window.speechSynthesis.cancel(); // Stop any pending speech
+
+      let processedText = phoneticOverride || textToSpeak;
+      if (currentLang === 'vi' && !phoneticOverride) {
+        processedText = sanitizeForVietnameseSpeech(textToSpeak);
+      }
+
+      const utterance = new SpeechSynthesisUtterance(processedText);
+      const voices = window.speechSynthesis.getVoices();
+
+      if (currentLang === 'vi') {
+        utterance.lang = 'vi-VN';
+        // Tìm kiếm nghiêm ngặt giọng tiếng Việt chuẩn (Google Tiếng Việt, Microsoft HoaiMy/An)
+        const viVoice = voices.find(v => v.lang.includes('vi') || v.lang.includes('VI') || v.name.toLowerCase().includes('vietnam') || v.name.toLowerCase().includes('tiếng việt'));
+        if (viVoice) {
+          utterance.voice = viVoice;
+        }
+        utterance.rate = 0.95; // Tốc độ hơi chậm rãi, rõ tiếng
+        utterance.pitch = 1.0;
+      } else {
+        utterance.lang = 'en-US';
+        const enVoice = voices.find(v => (v.lang === 'en-US' || v.lang === 'en_US') && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Samantha')));
+        if (enVoice) utterance.voice = enVoice;
+        utterance.rate = 1.0;
+      }
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // Initialize Web Speech API for candidate answering
+    function initSpeechRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) return;
+
+      recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = (currentLang === 'vi') ? 'vi-VN' : 'en-US';
+
+      recognition.onstart = () => {
+        isRecording = true;
+        document.getElementById('recordingWaveBar').classList.remove('hidden');
+        document.getElementById('micIcon').className = "fa-solid fa-microphone-slash text-red-400";
+      };
+
+      recognition.onresult = (event) => {
+        let transcript = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        document.getElementById('answerInput').value = transcript;
+      };
+
+      recognition.onerror = () => {
+        stopRecording();
+      };
+
+      recognition.onend = () => {
+        stopRecording();
+      };
+    }
+
+    function toggleSpeechRecognition() {
+      if (!recognition) initSpeechRecognition();
+      if (!recognition) {
+        showToast("Trình duyệt không hỗ trợ nhận diện giọng nói. Bạn hãy gõ câu trả lời bằng phím nhé!");
+        return;
+      }
+      if (isRecording) {
+        recognition.stop();
+        stopRecording();
+      } else {
+        window.speechSynthesis.cancel();
+        recognition.lang = (currentLang === 'vi') ? 'vi-VN' : 'en-US';
+        try {
+          recognition.start();
+        } catch (e) {
+          recognition.stop();
+        }
+      }
+    }
+
+    function stopRecording() {
+      isRecording = false;
+      document.getElementById('recordingWaveBar').classList.add('hidden');
+      document.getElementById('micIcon').className = "fa-solid fa-microphone text-slate-300";
+    }
+
+    function toggleGlobalMute() {
+      isVoiceActive = !isVoiceActive;
+      const icon = document.getElementById('globalAudioIcon');
+      const text = document.getElementById('globalAudioText');
+      if (isVoiceActive) {
+        icon.className = "fa-solid fa-volume-high text-emerald-400";
+        text.innerText = (currentLang === 'vi') ? "Giọng AI: BẬT" : "AI Voice: ON";
+      } else {
+        window.speechSynthesis.cancel();
+        icon.className = "fa-solid fa-volume-xmark text-rose-400";
+        text.innerText = (currentLang === 'vi') ? "Giọng AI: TẮT" : "AI Voice: OFF";
+      }
+    }
+
+    /* =====================================================================
+       5. FLOW & SCREEN CONTROLLERS
+       ===================================================================== */
+    function switchLanguage(lang) {
+      currentLang = lang;
+      const cardVi = document.getElementById('lang-card-vi');
+      const cardEn = document.getElementById('lang-card-en');
+      const labelName = document.getElementById('labelName');
+      const labelRole = document.getElementById('labelRole');
+      const btnStart = document.getElementById('btnStartText');
+      const selectRole = document.getElementById('targetPosition');
+
+      if (lang === 'vi') {
+        cardVi.className = "relative flex items-center p-3 rounded-xl border border-emerald-500 bg-emerald-500/15 cursor-pointer transition";
+        cardEn.className = "relative flex items-center p-3 rounded-xl border border-slate-800 bg-slate-950/80 cursor-pointer transition";
+        labelName.innerText = "2. Tên Ứng Viên";
+        labelRole.innerText = "3. Vị Trí Ứng Tuyển";
+        btnStart.innerText = "Vào Phòng Phỏng Vấn Ngay";
+        selectRole.options[0].text = "Lập Trình Viên Giao Diện (Frontend)";
+        selectRole.options[1].text = "Lập Trình Viên Phía Máy Chủ (Backend)";
+        document.getElementById('globalAudioText').innerText = isVoiceActive ? "Giọng AI: BẬT" : "Giọng AI: TẮT";
+      } else {
+        cardEn.className = "relative flex items-center p-3 rounded-xl border border-emerald-500 bg-emerald-500/15 cursor-pointer transition";
+        cardVi.className = "relative flex items-center p-3 rounded-xl border border-slate-800 bg-slate-950/80 cursor-pointer transition";
+        labelName.innerText = "2. Candidate Name";
+        labelRole.innerText = "3. Target Position";
+        btnStart.innerText = "Start Interview Now";
+        selectRole.options[0].text = "Frontend Web Engineer";
+        selectRole.options[1].text = "Backend Server Engineer";
+        document.getElementById('globalAudioText').innerText = isVoiceActive ? "AI Voice: ON" : "AI Voice: OFF";
+      }
+    }
+
+    function startInterview(e) {
+      e.preventDefault();
+      candidateName = document.getElementById('candidateName').value.trim() || 'Ứng viên';
+      currentRole = document.getElementById('targetPosition').value;
+
+      questionsList = QUESTION_DATA[currentLang][currentRole];
+      currentQuestionIndex = 0;
+      answersRecord = [];
+
+      // UI Switch
+      document.getElementById('screen-setup').classList.add('hidden');
+      document.getElementById('screen-chat').classList.remove('hidden');
+      document.getElementById('screen-chat').classList.add('flex');
+
+      // Update Header in Chat
+      if (currentLang === 'vi') {
+        document.getElementById('interviewerName').innerText = "Trợ Lý Phỏng Vấn AI";
+        document.getElementById('langBadge').innerText = "🇻🇳 Tiếng Việt Thuần";
+        document.getElementById('interviewerRoleText').innerText = `Ứng viên: ${candidateName} • Vị trí: ${(currentRole === 'frontend') ? 'Giao Diện' : 'Máy Chủ'}`;
+        document.getElementById('answerInput').placeholder = "Nói vào micro hoặc gõ câu trả lời của bạn...";
+        document.getElementById('sendBtnText').innerText = "Gửi";
+        document.getElementById('recordingText').innerText = "Đang nghe giọng nói của bạn... Hãy nói câu trả lời!";
+      } else {
+        document.getElementById('interviewerName').innerText = "AI Technical Interviewer";
+        document.getElementById('langBadge').innerText = "🇺🇸 English Mode";
+        document.getElementById('interviewerRoleText').innerText = `Candidate: ${candidateName} • Role: ${currentRole.toUpperCase()}`;
+        document.getElementById('answerInput').placeholder = "Speak into mic or type your answer...";
+        document.getElementById('sendBtnText').innerText = "Submit";
+        document.getElementById('recordingText').innerText = "Listening to your voice... Speak your answer!";
+      }
+
+      document.getElementById('chatMessages').innerHTML = "";
+      askCurrentQuestion();
+    }
+
+    function askCurrentQuestion() {
+      const q = questionsList[currentQuestionIndex];
+      const progressPercent = ((currentQuestionIndex + 1) / questionsList.length) * 100;
+      document.getElementById('progressBar').style.width = `${progressPercent}%`;
+      document.getElementById('progressLabel').innerText = (currentLang === 'vi') 
+        ? `Tiến độ: Câu ${currentQuestionIndex + 1} / ${questionsList.length}` 
+        : `Progress: Question ${currentQuestionIndex + 1} / ${questionsList.length}`;
+
+      // Show typing indicator
+      const typing = document.getElementById('typingIndicator');
+      typing.classList.remove('hidden');
+
+      setTimeout(() => {
+        typing.classList.add('hidden');
+        renderAiQuestion(q);
+        // Phát âm câu hỏi thuần âm
+        speakText(q.display, q.phonetic);
+      }, 700);
+    }
+
+    function renderAiQuestion(q) {
+      const container = document.getElementById('chatMessages');
+      const msgDiv = document.createElement('div');
+      msgDiv.className = "flex justify-start mb-4";
+      
+      msgDiv.innerHTML = `
+        <div class="max-w-xl bg-slate-800/90 border border-slate-700 text-slate-100 rounded-2xl rounded-tl-none p-4 shadow-lg">
+          <div class="flex items-center justify-between text-xs text-emerald-400 mb-1 font-semibold">
+            <span><i class="fa-solid fa-robot mr-1"></i> Câu hỏi ${currentQuestionIndex + 1}</span>
+            <button onclick="speakText('${q.display.replace(/'/g, "\\'")}', '${q.phonetic.replace(/'/g, "\\'")}')" class="text-[11px] text-slate-400 hover:text-emerald-300 transition flex items-center gap-1">
+              <i class="fa-solid fa-volume-high"></i> <span>Nghe lại</span>
+            </button>
+          </div>
+          <p class="text-sm leading-relaxed">${q.display}</p>
+        </div>
+      `;
+      container.appendChild(msgDiv);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function handleSendAnswer(e) {
+      e.preventDefault();
+      const input = document.getElementById('answerInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      stopRecording();
+      window.speechSynthesis.cancel();
+
+      // Render user message
+      renderUserMessage(text);
+      input.value = "";
+
+      // Save answer
+      const q = questionsList[currentQuestionIndex];
+      answersRecord.push({
+        question: q.display,
+        answer: text,
+        feedback: q.feedback
+      });
+
+      // Move next or finish
+      currentQuestionIndex++;
+      if (currentQuestionIndex < questionsList.length) {
+        setTimeout(() => {
+          askCurrentQuestion();
+        }, 600);
+      } else {
+        showEvaluationReport();
+      }
+    }
+
+    function renderUserMessage(text) {
+      const container = document.getElementById('chatMessages');
+      const msgDiv = document.createElement('div');
+      msgDiv.className = "flex justify-end mb-4";
+      msgDiv.innerHTML = `
+        <div class="max-w-xl bg-emerald-600 text-slate-950 font-medium rounded-2xl rounded-tr-none p-3.5 shadow-lg">
+          <div class="text-[10px] text-emerald-950 font-bold uppercase tracking-wider mb-0.5 text-right">${candidateName}</div>
+          <p class="text-sm leading-relaxed">${text}</p>
+        </div>
+      `;
+      container.appendChild(msgDiv);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    // Quick-Fill Sample Answers for fast testing
+    function fillSampleAnswer(type) {
+      const q = questionsList[currentQuestionIndex];
+      let answerText = "";
+      if (type === 'good') answerText = q.sampleGood;
+      else if (type === 'medium') answerText = q.sampleMed;
+      else answerText = q.samplePoor;
+
+      document.getElementById('answerInput').value = answerText;
+    }
+
+    /* =====================================================================
+       6. REPORT & RADAR EVALUATION
+       ===================================================================== */
+    function showEvaluationReport() {
+      document.getElementById('screen-chat').classList.remove('flex');
+      document.getElementById('screen-chat').classList.add('hidden');
+      document.getElementById('screen-report').classList.remove('hidden');
+
+      // Random high quality realistic scores for demo
+      const baseScore = 8.5;
+      const techScore = 8.8;
+      const commScore = 8.2;
+
+      document.getElementById('finalScoreVal').innerHTML = `${baseScore} <span class="text-xs text-slate-500 font-normal">/ 10</span>`;
+      document.getElementById('techScoreVal').innerHTML = `${techScore} <span class="text-xs text-slate-500 font-normal">/ 10</span>`;
+      document.getElementById('commScoreVal').innerHTML = `${commScore} <span class="text-xs text-slate-500 font-normal">/ 10</span>`;
+
+      // Render dynamic radar shape
+      document.getElementById('radarPolygon').setAttribute("points", "120,40 195,168 55,160");
+
+      const listContainer = document.getElementById('detailedQuestionsList');
+      listContainer.innerHTML = "";
+
+      answersRecord.forEach((item, idx) => {
+        const card = document.createElement('div');
+        card.className = "p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2";
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-emerald-400">Câu ${idx + 1}: ${item.question}</span>
+            <span class="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">8.5/10</span>
+          </div>
+          <div class="text-xs text-slate-300"><span class="text-slate-500">Trả lời:</span> "${item.answer}"</div>
+          <div class="text-xs text-teal-300 bg-teal-950/40 p-2.5 rounded-lg border border-teal-900/50">
+            <i class="fa-solid fa-circle-check mr-1"></i> <span class="font-medium">Nhận xét:</span> ${item.feedback}
+          </div>
+        `;
+        listContainer.appendChild(card);
+      });
+
+      // Voice praise summary
+      if (currentLang === 'vi') {
+        speakText("Chúc mừng bạn đã hoàn thành buổi phỏng vấn. Điểm tổng kết của bạn là tám phẩy năm trên mười.");
+      } else {
+        speakText("Congratulations on completing your interview. Your overall score is 8.5 out of 10.");
+      }
+    }
+
+    function restartSession() {
+      window.speechSynthesis.cancel();
+      document.getElementById('screen-report').classList.add('hidden');
+      document.getElementById('screen-setup').classList.remove('hidden');
+    }
+
+    function goToHome() {
+      window.speechSynthesis.cancel();
+      document.getElementById('screen-chat').classList.remove('flex');
+      document.getElementById('screen-chat').classList.add('hidden');
+      document.getElementById('screen-report').classList.add('hidden');
+      document.getElementById('screen-setup').classList.remove('hidden');
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toastVoice');
+      document.getElementById('toastMessage').innerText = msg;
+      toast.classList.remove('opacity-0', '-translate-y-6', 'pointer-events-none');
+      setTimeout(() => {
+        toast.classList.add('opacity-0', '-translate-y-6', 'pointer-events-none');
+      }, 3000);
+    }
+
+    // Pre-load synthesis voices
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices();
+      };
+    }
+  </script>
+</body>
+</html>
